@@ -1074,7 +1074,7 @@ namespace {
     }
 
     // Passed custom pawns
-    for (PieceSet ps = pos.variant()->promotionPawnTypes[Us] & ~piece_set(PAWN); ps;)
+    for (PieceSet ps = (pos.promotion_pawn_types(Us) & ~piece_set(PAWN)); ps;)
     {
         PieceType pt = pop_lsb(ps);
         Bitboard b2 = pos.pieces(Us, pt);
@@ -1283,6 +1283,15 @@ namespace {
     // Connect-n
     if (pos.connect_n() > 0)
     {
+        //Calculate eligible pieces for connection once.
+        //Still consider all opponent pieces as blocking.
+        Bitboard connectPiecesUs = 0;
+        for (PieceSet ps = pos.connect_piece_types(); ps;){
+            PieceType pt = pop_lsb(ps);
+            connectPiecesUs |= pos.pieces(pt);
+        };
+        connectPiecesUs &= pos.pieces(Us);
+
         for (const Direction& d : pos.getConnectDirections())
 
         {
@@ -1296,7 +1305,7 @@ namespace {
                 Square s = pop_lsb(b);
                 int c = 0;
                 for (int j = 0; j < pos.connect_n(); j++)
-                    if (pos.pieces(Us) & (s - j * d))
+                    if (connectPiecesUs & (s - j * d))
                         c++;
                 score += make_score(200, 200)  * c / (pos.connect_n() - c) / (pos.connect_n() - c);
             }
@@ -1379,8 +1388,8 @@ namespace {
 
     // Compute the initiative bonus for the attacking side
     complexity =       9 * pe->passed_count()
-                    + 12 * pos.count(WHITE, pos.promotion_pawn_type(WHITE)) * bool(pos.promotion_pawn_type(WHITE))
-                    + 12 * pos.count(BLACK, pos.promotion_pawn_type(BLACK)) * bool(pos.promotion_pawn_type(BLACK))
+                    + 12 * pos.count(WHITE, pos.main_promotion_pawn_type(WHITE)) * bool(pos.main_promotion_pawn_type(WHITE))
+                    + 12 * pos.count(BLACK, pos.main_promotion_pawn_type(BLACK)) * bool(pos.main_promotion_pawn_type(BLACK))
                     + 15 * pos.count<SOLDIER>()
                     +  9 * outflanking
                     + 21 * pawnsOnBothFlanks

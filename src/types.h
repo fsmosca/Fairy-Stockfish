@@ -318,6 +318,10 @@ enum WallingRule {
   NO_WALLING, ARROW, DUCK, EDGE, PAST, STATIC
 };
 
+enum EndgameEval {
+  NO_EG_EVAL, EG_EVAL_CHESS, EG_EVAL_ANTI, EG_EVAL_ATOMIC, EG_EVAL_DUCK, EG_EVAL_MISERE, EG_EVAL_RK, EG_EVAL_NB
+};
+
 enum OptBool {
   NO_VALUE, VALUE_FALSE, VALUE_TRUE
 };
@@ -480,6 +484,7 @@ enum : int {
   DEPTH_QS_CHECKS     =  0,
   DEPTH_QS_NO_CHECKS  = -1,
   DEPTH_QS_RECAPTURES = -5,
+  DEPTH_QS_MAX        = -32,
 
   DEPTH_NONE   = -6,
 
