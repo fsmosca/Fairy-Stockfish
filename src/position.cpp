@@ -2046,7 +2046,6 @@ void Position::do_move(Move m, StateInfo& newSt, bool givesCheck) {
               st->capturedGatingType = uncommit_piece(BLACK, file_of(to));
           }
       }
-      else st->removedGatingType = NO_PIECE_TYPE;
   }
   // Remove gates
   if (gating())
