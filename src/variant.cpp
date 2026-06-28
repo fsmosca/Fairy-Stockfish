@@ -1272,8 +1272,8 @@ namespace {
         v->startFen = "lc******/rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR/LC****** w KQkq - 0 1";
         v->gating = true;
         v->commitGates = true;
-        v->promotionPieceTypes[BLACK] = piece_set(CUSTOM_PIECE_1) | CUSTOM_PIECE_7 | QUEEN | ROOK | BISHOP | KNIGHT;
-        v->promotionPieceTypes[WHITE] = piece_set(CUSTOM_PIECE_1) | CUSTOM_PIECE_7 | QUEEN | ROOK | BISHOP | KNIGHT;
+        // Promotion set (G.2: N/B/R/Q + the two selected pieces) is derived per
+        // position from the drop area, see Position::set/promotion_piece_types.
         return v;
     }
     // Shogi (Japanese chess)

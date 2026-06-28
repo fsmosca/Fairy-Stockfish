@@ -580,6 +580,21 @@ Position& Position::set(const Variant* v, const string& fenStr, bool isChess960,
   chess960 = isChess960 || v->chess960;
   tsumeMode = Options["TsumeMode"];
   thisThread = th;
+
+  // Musketeer: snapshot the two game-start selected pieces from the drop area
+  // (committedGates) for pawn promotion (rule G.2). committedGates changes as
+  // pieces gate/get captured, so capture it once here.
+  if (commit_gates())
+  {
+      musketeerPromotionTypes = piece_set(QUEEN) | ROOK | BISHOP | KNIGHT;
+      for (Color cl : {WHITE, BLACK})
+          for (File f = FILE_A; f <= max_file(); ++f)
+              if (has_committed_piece(cl, f))
+                  musketeerPromotionTypes |= committedGates[cl][f];
+  }
+  else
+      musketeerPromotionTypes = NO_PIECE_SET;
+
   set_state(st);
 
   assert(pos_is_ok());

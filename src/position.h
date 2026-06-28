@@ -388,6 +388,7 @@ private:
   bool chess960;
   int pieceCountInHand[COLOR_NB][PIECE_TYPE_NB];
   PieceType committedGates[COLOR_NB][FILE_NB];
+  PieceSet musketeerPromotionTypes = NO_PIECE_SET;
   int virtualPieces;
   Bitboard promotedPieces;
   void add_to_hand(Piece pc);
@@ -477,6 +478,10 @@ inline PieceType Position::main_promotion_pawn_type(Color c) const {
 
 inline PieceSet Position::promotion_piece_types(Color c) const {
   assert(var != nullptr);
+  // Musketeer: promotion set is the two game-start selected pieces (snapshotted
+  // from the drop area at set()) plus the standard N/B/R/Q.
+  if (commit_gates())
+      return musketeerPromotionTypes;
   return var->promotionPieceTypes[c];
 }
 
