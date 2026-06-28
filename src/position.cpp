@@ -666,6 +666,7 @@ void Position::set_state(StateInfo* si) const {
   si->removedGatingType = NO_PIECE_TYPE;
   si->removedCastlingGatingType = NO_PIECE_TYPE;
   si->capturedGatingType = NO_PIECE_TYPE;
+  si->lostGatingType = NO_PIECE_TYPE;
 
   set_check_info(si);
 
@@ -1617,6 +1618,7 @@ void Position::do_move(Move m, StateInfo& newSt, bool givesCheck) {
       st->removedGatingType = NO_PIECE_TYPE;
       st->removedCastlingGatingType = NO_PIECE_TYPE;
       st->capturedGatingType = NO_PIECE_TYPE;
+      st->lostGatingType = NO_PIECE_TYPE;
   }
   // Increment ply counters. In particular, rule50 will be reset to zero later on
   // in case of a capture or a pawn move.
@@ -2029,12 +2031,21 @@ void Position::do_move(Move m, StateInfo& newSt, bool givesCheck) {
 
   // Musketeer gating
   if(commit_gates()){
+      Bitboard prevCheckers = st->previous->checkersBB; // pre-move checkers (checkersBB is past key, not copied)
       {
           Rank r = rank_of(from);
           if(r == RANK_1 && has_committed_piece(WHITE, file_of(from))){
-              st->removedGatingType = drop_committed_piece(WHITE, file_of(from));
+              // G.3.b: a king gate keeper forced to move while in check
+              // (without capturing the attacker) loses its gating piece.
+              if (type_of(pc) == KING && prevCheckers && !(captured && (prevCheckers & to)))
+                  st->lostGatingType = uncommit_piece(WHITE, file_of(from));
+              else
+                  st->removedGatingType = drop_committed_piece(WHITE, file_of(from));
           } else if(r == max_rank() && has_committed_piece(BLACK, file_of(from))){
-              st->removedGatingType = drop_committed_piece(BLACK, file_of(from));
+              if (type_of(pc) == KING && prevCheckers && !(captured && (prevCheckers & to)))
+                  st->lostGatingType = uncommit_piece(BLACK, file_of(from));
+              else
+                  st->removedGatingType = drop_committed_piece(BLACK, file_of(from));
           }
       }
       if (captured) {
@@ -2280,6 +2291,10 @@ void Position::undo_move(Move m) {
   if (commit_gates() && st->capturedPiece && st->capturedGatingType > NO_PIECE_TYPE){
       // return musketeer piece fronted by the captured piece
       commit_piece(make_piece(color_of(st->capturedPiece), st->capturedGatingType), file_of(to));
+  }
+  if (commit_gates() && st->lostGatingType > NO_PIECE_TYPE){
+      // G.3.b: restore the musketeer piece lost when the king gate keeper was forced to move
+      commit_piece(make_piece(us, st->lostGatingType), file_of(from));
   }
 
   if (type_of(m) == PROMOTION)

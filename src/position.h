@@ -86,6 +86,7 @@ struct StateInfo {
   PieceType removedGatingType;
   PieceType removedCastlingGatingType;
   PieceType capturedGatingType;
+  PieceType lostGatingType;
 
   // Used by NNUE
   Eval::NNUE::Accumulator accumulator;
