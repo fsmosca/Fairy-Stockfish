@@ -226,6 +226,31 @@ Key Position::material_key(EndgameEval e) const {
 }
 
 
+/// Position::musketeer_setup_ok() validates musketeer rule G.4: a player must
+/// not have committed pieces at both the king file and a castling rook file,
+/// because castling would then gate two pieces at once.
+
+bool Position::musketeer_setup_ok() const {
+    if (!commit_gates())
+        return true;
+    for (Color c : {WHITE, BLACK})
+    {
+        if (!count<KING>(c))
+            continue;
+        File kFile = file_of(square<KING>(c));
+        if (!has_committed_piece(c, kFile))
+            continue; // no piece behind the king -> no king-column gate
+        // King file holds a committed piece; a castling rook holding one too
+        // would result in two pieces entering on a single castle move.
+        for (CastlingRights cr : {CastlingRights(c == WHITE ? WHITE_OO : BLACK_OO),
+                                  CastlingRights(c == WHITE ? WHITE_OOO : BLACK_OOO)})
+            if (can_castle(cr) && has_committed_piece(c, file_of(castling_rook_square(cr))))
+                return false;
+    }
+    return true;
+}
+
+
 /// Position::set() initializes the position object with the given FEN string.
 /// This function is not very robust - make sure that input FENs are correct,
 /// this is assumed to be the responsibility of the GUI.
@@ -594,6 +619,19 @@ Position& Position::set(const Variant* v, const string& fenStr, bool isChess960,
   }
   else
       musketeerPromotionTypes = NO_PIECE_SET;
+
+  // Musketeer rule G.4: reject setups where a player has committed pieces at
+  // both the king file and a castling rook file (castling would double-gate).
+  if (commit_gates() && !musketeer_setup_ok())
+  {
+      sync_cout << "info string illegal fen " << fenStr
+                << "- musketeer rule G.4: cannot commit pieces at both the king"
+                << " file and a rook file (castling would gate two pieces at once)"
+                << sync_endl;
+      // Reject by reverting to the variant's legal start FEN.
+      if (fenStr != var->startFen)
+          return set(var, var->startFen, isChess960, si, th, sfen);
+  }
 
   set_state(st);
 
